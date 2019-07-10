@@ -1,0 +1,18 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+BrushlessWheels	KEYWORD1	BrushlessWheels
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+Int16ToByteData	KEYWORD2
+
+RPMToRaw	KEYWORD2
+Init	KEYWORD2
+waitUntilFourZero	KEYWORD2
+ESCHandShake	KEYWORD2
+zeroSpeed	KEYWORD2
+DriveWheels	KEYWORD2
+

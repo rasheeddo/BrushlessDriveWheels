@@ -7,12 +7,13 @@
 #define BrushlessWheels_H
 
 #include "Arduino.h"
+#include <SoftwareSerial.h>
 
 
 class BrushlessWheels
 {
 public:
-    BrushlessWheels();
+    BrushlessWheels(SoftwareSerial*);
     //class constructor to initialize baudrate setting 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -32,6 +33,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     ///////////////////////////////////// Hand Shake with ESC //////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////
+    bool serialBegin(uint32_t baudrate);
 
     void Init();
     // Init: initialize by do waitUntilFourByte, ESCHandShake and zeroSpeed
@@ -57,6 +59,8 @@ public:
 
 private:
 
+    SoftwareSerial * _ser;
+
     bool startTick = true;
     unsigned char ReadByte;
     unsigned char Reply[6];
@@ -72,6 +76,24 @@ private:
 
     byte Header1 = 0x02;
     byte Header2 = 0x09;
+
+    unsigned char InitHeader1;
+    unsigned char InitHeader2;
+    unsigned char ForwardAcc;
+    unsigned char ForwardDelay;
+    unsigned char BrakeDis;
+    unsigned char TurnAcc;
+    unsigned char TurnDelay;
+    unsigned char AccTimeOfStart;
+    unsigned char SenRocker;
+    unsigned char UnderVolt1;
+    unsigned char UnderVolt2;
+    unsigned char StartSpeed;
+    unsigned char DriveMode;
+    unsigned char PhaseLMotor;
+    unsigned char PhaseRMotor;
+    unsigned char MotorConfig;
+    unsigned char InitCheckSum;
 
 };
 

@@ -6,9 +6,43 @@
 #include "Arduino.h"
 #include "BrushlessWheels.h"
 
-BrushlessWheels::BrushlessWheels()
+BrushlessWheels::BrushlessWheels(SoftwareSerial *ser)
 {
-  Serial1.begin(9600);                                  // Specific baudrate for communication with ESC
+  _ser = ser;
+  // Initialized of 17 bytes
+  InitHeader1 = 0x01;     // always constant
+  InitHeader2 = 0x11;     // always constant
+  ForwardAcc = 0x32;      // 0x00 to 0x64   [0-100]   An acceleration when changing speed value
+  ForwardDelay = 0x00;    // 0x00 t0 0x05   [0-5]     A delay before start to go
+  BrakeDis = 0x0A;        // 0x00 to 0x64   [0-100]   Brake distance, should be as short as possible (rigid brake)
+  TurnAcc = 0x32;         // 0x00 to 0x64   [0-100]   Turning acceleration, when two wheels has reverse direction
+  TurnDelay = 0x01;       // 0x00 t0 0x05   [0-5]     A delay before start turning
+  AccTimeOfStart = 0x00;  // 0x00 to 0x32   [0-50]    increase this will make wheels slower
+  SenRocker = 0x83;       // Don't need to change     this is for curving motion, we have our own calculation.
+  UnderVolt1 = 0x14;      // 0x12 -> 18.0V, 0x13 -> 19.0V, 0x14 -> 20.0V, 0x15 -> 21.0V, 0x16 -> 22.0V
+  UnderVolt2 = 0x05;      // 0x01 to 0x09 -> 0.1V tp 0.9V
+  StartSpeed = 0x0A;      // 0x00 to 0x64   [0-100]   starting speed if too high you will hear some cogging sound out from gear, set not too high
+  DriveMode = 0x01;       // 0x01 is Sine wave, 0x00 is square wave. Don't need to change, square wave seems not working well...
+  PhaseLMotor = 0x03;     // Don't need to change     not sure what is this, so leave it alone 
+  PhaseRMotor = 0x04;     // Don't need to change     not sure what is this, so leave it alone
+  MotorConfig = 0x07;     // Don't need to change     This is about choosing which wheel will be reverse
+  InitCheckSum = InitHeader1 + InitHeader2 + ForwardAcc + ForwardDelay + BrakeDis + TurnAcc + TurnDelay + AccTimeOfStart + SenRocker 
+                  + UnderVolt1 + UnderVolt2 + StartSpeed + DriveMode + PhaseLMotor + PhaseRMotor + MotorConfig;
+  
+}
+
+bool BrushlessWheels::serialBegin(uint32_t baudrate){
+
+  // this motor's esc needs 9600 bps baudrate
+  if (baudrate != 9600){
+
+    return 0;
+  }
+  else{
+    _ser->begin(baudrate);
+    return 1;
+  }
+  
 }
 
 void BrushlessWheels::Init()
@@ -57,10 +91,10 @@ void BrushlessWheels::waitUntilFourZero()
   while (startTick == true)
   {
 
-    while (Serial1.available() > 0)
+    while (_ser->available() > 0)
       {  
 
-      ReadByte = Serial1.read();
+      ReadByte = _ser->read();
       Reply[i] = ReadByte;
       i++;
       ReadOK = true;
@@ -87,27 +121,27 @@ void BrushlessWheels::waitUntilFourZero()
 
 void BrushlessWheels::ESCHandShake()
 {
-  Serial.println("Here");
+  //Serial.println("Here");
   for (i=1;i<=20;i++)
   {  
-    Serial1.write(0x01);
-    Serial1.write(0x11);
-    Serial1.write(0x28);
-    Serial1.write(0x02);
-    Serial1.write(0x50);
-    Serial1.write(0x32);
-    Serial1.write(0x03);
-    Serial1.write(0x1E);
-    Serial1.write(0x83);
-    Serial1.write(0x15);
-    Serial1.write(0x06);
-    Serial1.write(0x0A);
-    Serial1.write(0x01);
-    Serial1.write(0x03);
-    Serial1.write(0x04);
-    Serial1.write(0x07);
-    Serial1.write(0x96);
-    Serial1.flush();
+    _ser->write(InitHeader1);
+    _ser->write(InitHeader2);
+    _ser->write(ForwardAcc);
+    _ser->write(ForwardDelay);
+    _ser->write(BrakeDis);
+    _ser->write(TurnAcc);
+    _ser->write(TurnDelay);
+    _ser->write(AccTimeOfStart);
+    _ser->write(SenRocker);
+    _ser->write(UnderVolt1);
+    _ser->write(UnderVolt2);
+    _ser->write(StartSpeed);
+    _ser->write(DriveMode);
+    _ser->write(PhaseLMotor);
+    _ser->write(PhaseRMotor);
+    _ser->write(MotorConfig);
+    _ser->write(InitCheckSum);
+    _ser->flush();
     
     if (i == 1){
       delayMicroseconds(300);                              // DON'T change this delay, it's from hacking
@@ -121,16 +155,16 @@ void BrushlessWheels::ESCHandShake()
 
 void BrushlessWheels::zeroSpeed()
 {
-    Serial1.write(Header1);      
-    Serial1.write(Header2);
-    Serial1.write(0x00);            // Motor1 speed hibyte
-    Serial1.write(0x00);            // Motor1 speed lobyte
-    Serial1.write(0x00);            // Motor2 speed hibyte
-    Serial1.write(0x00);            // Motor2 speed lobyte
-    Serial1.write(0xB4);            // Mode hibyte (don't care)
-    Serial1.write(0x00);            // Mode lobyte (don't care)
-    Serial1.write(0xBF);            // Check sum
-    Serial.flush();
+    _ser->write(Header1);      
+    _ser->write(Header2);
+    _ser->write((unsigned char)0x00);            // Motor1 speed hibyte
+    _ser->write((unsigned char)0x00);            // Motor1 speed lobyte
+    _ser->write((unsigned char)0x00);            // Motor2 speed hibyte
+    _ser->write((unsigned char)0x00);            // Motor2 speed lobyte
+    _ser->write((unsigned char)0xB4);            // Mode hibyte (don't care)
+    _ser->write((unsigned char)0x00);            // Mode lobyte (don't care)
+    _ser->write((unsigned char)0xBF);            // Check sum
+    _ser->flush();
     delay(23);                      // DON'T change this delay, it's from hacking
   
 }
@@ -154,16 +188,16 @@ void BrushlessWheels::DriveWheels(float rpm1, float rpm2)
   byte CheckSum = Header1 + Header2 + Motor1hibyte + Motor1lobyte + Motor2hibyte + Motor2lobyte + Modehibyte + Modelobyte;
   
   
-    Serial1.write(Header1);
-    Serial1.write(Header2);
-    Serial1.write(Motor1hibyte);
-    Serial1.write(Motor1lobyte);
-    Serial1.write(Motor2hibyte);
-    Serial1.write(Motor2lobyte);
-    Serial1.write(Modehibyte);
-    Serial1.write(Modelobyte);
-    Serial1.write(CheckSum);
-    Serial.flush();
+    _ser->write(Header1);
+    _ser->write(Header2);
+    _ser->write(Motor1hibyte);
+    _ser->write(Motor1lobyte);
+    _ser->write(Motor2hibyte);
+    _ser->write(Motor2lobyte);
+    _ser->write(Modehibyte);
+    _ser->write(Modelobyte);
+    _ser->write(CheckSum);
+    _ser->flush();
    delay(23);                      // DON'T change this delay, it's from hacking
 
   

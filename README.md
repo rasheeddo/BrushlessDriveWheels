@@ -39,36 +39,45 @@ After doing the HandShake, the ESC are ready and keep waiting for the speed comm
 
 The first two bytes are Headers, then two bytes of speed of first wheel and two bytes of speed of second wheel. Next are two bytes of MODE, but after trial and error, I found out that this is "don't care", so we can simpply set it as 0x00 for both. Last byte is a check sum of all bytes.
 
-So instead of using their joystick, I changed to Arduino MEGA and the wiring is as follow
+So instead of using their joystick, I changed to Arduino MEGA or Nano and the wiring are as follow
 
 ![](images/arduinowiring.JPG)
+
+![](images/arduinoNanoWiring.png)
 
 with external MCU, we can send a command packet to the ESC and use it with autonomouos drive or other applications.
 
 # Example #
-First, download BrushlessWheels.cpp, BrushlessWheels.h and all the stuff into Arduino libraries folder in your PC. Then open examples/DirectCommand folder, you can see a simple how to use this API to control these wheels
+First, download BrushlessWheels.cpp, BrushlessWheels.h and all the stuff into Arduino libraries folder in your PC. Then open examples/DirectCommand folder (for Arduino Mega) or TwoSerials folder (for Arduino Nano), you can see a simple how to use this API to control these wheels
 ```
 #include <BrushlessWheels.h>
+#include <SoftwareSerial.h>
 
-BrushlessWheels BW;
+//Software Serial (RX,TX)
+SoftwareSerial wheelSerial(11,10);
+
+BrushlessWheels BW(&wheelSerial);
 
 void setup() {
+  // for PC uart prinln
+  Serial.begin(115200);
 
-  Serial.begin(57600);
-
-  // Do initialize 
+  // baudrate of wheel's esc must be 9600
+  while(!(BW.serialBegin(9600)));
+  // initialize the wheel's esc
   BW.Init();
-  
 
+  Serial.println("Initialized complete!");
 }
 
 void loop() {
-
+  
   // Input two RPM values for both wheels
   BW.DriveWheels(60.0,60.0);
+
 }
 ```
-Just make an object of library, `BrushlessWheels BW`, do initialize `BW.Init()` then you are ready to send the RPM command to control the speed of those wheels as `BW.DriveWheels(60.0,60.0)`. The maximum speed is 144RPM for both forward and reverse.
+First, choose the SoftwareSerial pins as you want to use, I used 11 as Rx and 10 as Tx, but becareful that those pins are available for your Arduino board. Then just make an object of library, `BrushlessWheels BW(&wheelSerial)` and pass the wheelSerial reference to it. Specify baudrate of the wheel's ESC as 9600 (mandatory), then do an initialization `BW.Init()` then you are ready to send the RPM command to control the speed of those wheels as `BW.DriveWheels(60.0,60.0)`. The maximum speed is 144RPM for both forward and reverse.
 If you have an two-axis analog joystick, you can try an example of JoyControlCommand.ino by plugging the analog line to A0 and A1 on your Arduino.
 
 

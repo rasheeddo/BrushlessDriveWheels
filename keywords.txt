@@ -8,7 +8,7 @@ BrushlessWheels	KEYWORD1	BrushlessWheels
 # Methods and Functions (KEYWORD2)
 #######################################
 Int16ToByteData	KEYWORD2
-
+serialBegin	KEYWORD2
 RPMToRaw	KEYWORD2
 Init	KEYWORD2
 waitUntilFourZero	KEYWORD2

@@ -19,7 +19,7 @@ After looking it for a while, I can summarize it on this figure...
 
 ![](images/startcom.JPG)
 
-First, when the power is ON, the ESC will send four bytes of zero to the joystick, so the joystick needs to receive this message then send back 17bytes of data packet with 20times, kind of "Hand Shake" between devices. I was mimicking this behavior by waiting the incoming byte as `waitUntilFourZero()`, then send those 17bytes back to the ESC by using `ESCHandShake()`. In the code BrushlessWheels.cpp, you can see how it works on Init() function.
+First, when the power is ON, the ESC will send four bytes of zero to the joystick, so the joystick needs to receive this message then send back 17bytes of initialization parameters packet for 20times, kind of "Hand Shake" between devices. I was mimicking this behavior by waiting the incoming byte as `waitUntilFourZero()`, then send those 17bytes back to the ESC by using `ESCHandShake()`. In the code BrushlessWheels.cpp, you can see how it works on Init() function.
 ```
 void BrushlessWheels::Init()
 {

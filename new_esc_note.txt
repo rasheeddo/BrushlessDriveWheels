@@ -1,0 +1,14 @@
+waitUntilFourZeros
+
+delay ~186ms
+
+MCU send: 18bytes x2
+ESC reply: 8bytes 0x81 0x08 0x00 0x00 0x05 0x00 0x00 0x8E
+
+wait ~12.7ms
+
+MCU send: 18bytes
+ESC reply 
+(18 rounds)
+
+

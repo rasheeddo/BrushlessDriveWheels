@@ -56,6 +56,8 @@ public:
     void DriveWheels(float rpm1, float rpm2);
     // DriveWheels: drive both wheels with desired rpm, + for forward - for reverse rotations
 
+    void DriveByBytes(unsigned char hi_byte, unsigned char lo_byte);
+
 
 private:
 
@@ -93,7 +95,10 @@ private:
     unsigned char PhaseLMotor;
     unsigned char PhaseRMotor;
     unsigned char MotorConfig;
+    unsigned char Extra_byte; // Unknown extra byte
     unsigned char InitCheckSum;
+
+    float max_rpm = 136.0;
 
 };
 

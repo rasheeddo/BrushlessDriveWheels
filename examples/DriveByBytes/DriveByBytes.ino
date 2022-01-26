@@ -19,8 +19,8 @@ void setup() {
 }
 
 void loop() {
-  
-  // Input two RPM values for both wheels
-  BW.DriveWheels(60.0, 60.0);
+  // Send same speed bytes command directly to both wheels
+  // BW.DriveByBytes(HI_BYTE, LO_BYTE);
+  BW.DriveByBytes(0x32, 0x00);
 
 }

@@ -9,9 +9,9 @@
 BrushlessWheels::BrushlessWheels(SoftwareSerial *ser)
 {
   _ser = ser;
-  // Initialized of 17 bytes
+  // Initialized of 18 bytes (old-batch-ESC has only 17 bytes)
   InitHeader1 = 0x01;     // always constant
-  InitHeader2 = 0x11;     // always constant
+  InitHeader2 = 0x12;     // always constant (old-batch-ESC was 0x11)
   ForwardAcc = 0x32;      // 0x00 to 0x64   [0-100]   An acceleration when changing speed value
   ForwardDelay = 0x00;    // 0x00 t0 0x05   [0-5]     A delay before start to go
   BrakeDis = 0x0A;        // 0x00 to 0x64   [0-100]   Brake distance, should be as short as possible (rigid brake)
@@ -26,8 +26,9 @@ BrushlessWheels::BrushlessWheels(SoftwareSerial *ser)
   PhaseLMotor = 0x03;     // Don't need to change     not sure what is this, so leave it alone 
   PhaseRMotor = 0x04;     // Don't need to change     not sure what is this, so leave it alone
   MotorConfig = 0x07;     // Don't need to change     This is about choosing which wheel will be reverse
+  Extra_byte = 0x80;      // I still have no idea what is this for..?? but we need it 
   InitCheckSum = InitHeader1 + InitHeader2 + ForwardAcc + ForwardDelay + BrakeDis + TurnAcc + TurnDelay + AccTimeOfStart + SenRocker 
-                  + UnderVolt1 + UnderVolt2 + StartSpeed + DriveMode + PhaseLMotor + PhaseRMotor + MotorConfig;
+                  + UnderVolt1 + UnderVolt2 + StartSpeed + DriveMode + PhaseLMotor + PhaseRMotor + MotorConfig + Extra_byte;
   
 }
 
@@ -48,7 +49,7 @@ bool BrushlessWheels::serialBegin(uint32_t baudrate){
 void BrushlessWheels::Init()
 {
   waitUntilFourZero();                                  // Wait ESC to response and do a hand-shake
-  delay(219);                                           // DON'T change this delay, it's from hacking
+  delay(186); //delay(219);                             // DON'T change this delay, it's from hacking
   ESCHandShake();
 
   for (i=1;i<10;i++)                                    // start the wheels from zero rpm before drive
@@ -69,19 +70,25 @@ unsigned int BrushlessWheels::RPMToRaw(float rpm)
   int raw_int;
   unsigned int out_raw;
 
-    // map rpm to raw value
-    raw_int = (int)map(rpm, 0.0, 144.0, 0, 3200);
-  
-    // In case of negative number, shift mapped number from 32768 to 35968 (for 0.0 to -146.0)
-    if (rpm < 0.0)
-    {
-      out_raw = 32768 + abs(raw_int);
-      }
-    // In case of positive number, use the mapped number for unsigned int type
-    else
-    {
-      out_raw = raw_int;
-      }
+  if (rpm > max_rpm){
+    rpm = max_rpm;
+  } else if (rpm < -max_rpm){
+    rpm = -max_rpm;
+  }
+
+  // map rpm to raw value
+  raw_int = (int)map(rpm, 0.0, 136.0, 0, 25600); // raw_int = (int)map(rpm, 0.0, 144.0, 0, 3200);
+
+  // In case of negative number, shift mapped number from 32768 to 35968 (for 0.0 to -146.0)
+  if (rpm < 0.0)
+  {
+    out_raw = 33500 + abs(raw_int); // 32500 // out_raw = 32768 + abs(raw_int);
+    }
+  // In case of positive number, use the mapped number for unsigned int type
+  else
+  {
+    out_raw = raw_int;
+    }
   
   return out_raw;
 }
@@ -140,15 +147,17 @@ void BrushlessWheels::ESCHandShake()
     _ser->write(PhaseLMotor);
     _ser->write(PhaseRMotor);
     _ser->write(MotorConfig);
+    _ser->write(Extra_byte);     // Extra unknown byte ???
     _ser->write(InitCheckSum);
     _ser->flush();
     
-    if (i == 1){
-      delayMicroseconds(300);                              // DON'T change this delay, it's from hacking
-    }
-    else{
+    //if (i == 1){
+      //delayMicroseconds(300);                              // DON'T change this delay, it's from hacking
 
-      delay(14);                                           // DON'T change this delay, it's from hacking
+    //}
+    if (i != 1){
+
+      delay(12.7);  //delay(14);                                           // DON'T change this delay, it's from hacking
     }
   }
 }
@@ -201,4 +210,25 @@ void BrushlessWheels::DriveWheels(float rpm1, float rpm2)
    delay(23);                      // DON'T change this delay, it's from hacking
 
   
+}
+
+void BrushlessWheels::DriveByBytes(unsigned char hi_byte, unsigned char lo_byte)
+{
+
+  byte Modehibyte = 0x00;    // don't care 
+  byte Modelobyte = 0x00;    // don't care
+  byte CheckSum = Header1 + Header2 + hi_byte + lo_byte + hi_byte + lo_byte + Modehibyte + Modelobyte;
+  
+  _ser->write(Header1);
+  _ser->write(Header2);
+  _ser->write(hi_byte);
+  _ser->write(lo_byte);
+  _ser->write(hi_byte);
+  _ser->write(lo_byte);
+  _ser->write(Modehibyte);
+  _ser->write(Modelobyte);
+  _ser->write(CheckSum);
+  _ser->flush();
+  delay(23);                      // DON'T change this delay, it's from hacking
+
 }

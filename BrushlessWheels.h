@@ -7,13 +7,13 @@
 #define BrushlessWheels_H
 
 #include "Arduino.h"
-#include <SoftwareSerial.h>
+#include <HardwareSerial.h> //<SoftwareSerial.h>
 
 
 class BrushlessWheels
 {
 public:
-    BrushlessWheels(SoftwareSerial*);
+    BrushlessWheels(HardwareSerial *ser); //BrushlessWheels(SoftwareSerial*);
     //class constructor to initialize baudrate setting 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ public:
 
 private:
 
-    SoftwareSerial * _ser;
+    HardwareSerial * _ser; //SoftwareSerial * _ser;
 
     bool startTick = true;
     unsigned char ReadByte;
@@ -99,6 +99,8 @@ private:
     unsigned char InitCheckSum;
 
     float max_rpm = 136.0;
+
+    unsigned long last_drive_stamp = millis();
 
 };
 

@@ -6,7 +6,7 @@
 #include "Arduino.h"
 #include "BrushlessWheels.h"
 
-BrushlessWheels::BrushlessWheels(SoftwareSerial *ser)
+BrushlessWheels::BrushlessWheels(HardwareSerial *ser) //BrushlessWheels::BrushlessWheels(SoftwareSerial *ser)
 {
   _ser = ser;
   // Initialized of 18 bytes (old-batch-ESC has only 17 bytes)
@@ -196,7 +196,9 @@ void BrushlessWheels::DriveWheels(float rpm1, float rpm2)
   byte Modelobyte = 0x00;    // don't care
   byte CheckSum = Header1 + Header2 + Motor1hibyte + Motor1lobyte + Motor2hibyte + Motor2lobyte + Modehibyte + Modelobyte;
   
-  
+  // Try this time checking instead of delay
+  if ((millis() - last_drive_stamp) >= 23){
+
     _ser->write(Header1);
     _ser->write(Header2);
     _ser->write(Motor1hibyte);
@@ -207,7 +209,9 @@ void BrushlessWheels::DriveWheels(float rpm1, float rpm2)
     _ser->write(Modelobyte);
     _ser->write(CheckSum);
     _ser->flush();
-   delay(23);                      // DON'T change this delay, it's from hacking
+    last_drive_stamp = millis();
+  }
+   //delay(23);                      // DON'T change this delay, it's from hacking
 
   
 }
